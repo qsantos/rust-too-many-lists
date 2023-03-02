@@ -301,9 +301,9 @@ impl<T: Ord> Ord for LinkedList<T> {
     }
 }
 
-impl<T> Debug for LinkedList<T> {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unimplemented!()
+impl<T: Debug> Debug for LinkedList<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_list().entries(self).finish()
     }
 }
 
