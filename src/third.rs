@@ -1,14 +1,14 @@
 use std::rc::Rc;
 
-type Anchor<T> = Option<Rc<Node<T>>>;
+type Link<T> = Option<Rc<Node<T>>>;
 
 struct Node<T> {
     value: T,
-    next: Anchor<T>,
+    next: Link<T>,
 }
 
 pub struct List<T> {
-    head: Anchor<T>,
+    head: Link<T>,
 }
 
 impl<T> List<T> {

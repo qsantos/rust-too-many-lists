@@ -1,12 +1,12 @@
-type Anchor<T> = Option<Box<Node<T>>>;
+type Link<T> = Option<Box<Node<T>>>;
 
 struct Node<T> {
     value: T,
-    next: Anchor<T>,
+    next: Link<T>,
 }
 
 pub struct List<T> {
-    root: Anchor<T>,
+    root: Link<T>,
 }
 
 impl<T> List<T> {
