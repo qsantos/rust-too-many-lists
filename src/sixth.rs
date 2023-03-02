@@ -413,33 +413,37 @@ impl<'a, T> CursorMut<'a, T> {
 
     pub fn split_before(&mut self) -> LinkedList<T> {
         if let Some(node) = self.current {
+            let index = self.index.unwrap();
+            let prev = unsafe { (*node.as_ptr()).prev };
+
+            // Self will contain everything after the cursor
+            let self_len = self.list.len - index;
+            let self_first = Some(node);
+            let self_last = self.list.last;
+            let self_index = Some(0);
+
+            // Output will contain everything before the cursor
+            let new_len = self.list.len - self_len;
+            let new_first = self.list.first;
+            let new_last = prev;
+
             unsafe {
-                let old_len = self.list.len;
-                let old_index = self.index.unwrap();
-                let prev = (*node.as_ptr()).prev;
-
-                // Self will contain everything after the cursor
-                let self_len = old_len - old_index;
-                let self_first = Some(node);
-                let self_last = self.list.last;
-                let self_idx = Some(0);
-
-                // Output will contain everything before the cursor
-                let new_len = old_index;
-                let new_first = self.list.first;
-                let new_last = prev;
-
-                self.list.len = self_len;
-                self.list.first = self_first;
-                self.list.last = self_last;
-                self.index = self_idx;
-
-                LinkedList {
-                    first: new_first,
-                    last: new_last,
-                    len: new_len,
-                    _phantom: PhantomData,
+                if let Some(prev) = prev {
+                    (*prev.as_ptr()).next = None;
+                    (*node.as_ptr()).prev = None;
                 }
+            }
+
+            self.list.len = self_len;
+            self.list.first = self_first;
+            self.list.last = self_last;
+            self.index = self_index;
+
+            LinkedList {
+                first: new_first,
+                last: new_last,
+                len: new_len,
+                _phantom: PhantomData,
             }
         } else {
             std::mem::replace(self.list, LinkedList::new())
@@ -447,15 +451,106 @@ impl<'a, T> CursorMut<'a, T> {
     }
 
     pub fn split_after(&mut self) -> LinkedList<T> {
-        unimplemented!()
+        if let Some(node) = self.current {
+            let index = self.index.unwrap();
+            let next = unsafe { (*node.as_ptr()).next };
+
+            // Self will contain everything before the cursor
+            let self_len = index + 1;
+            let self_first = self.list.first;
+            let self_last = Some(node);
+            let self_index = Some(index);
+
+            // Output will contain everything after the cursor
+            let new_len = self.list.len - self_len;
+            let new_first = next;
+            let new_last = self.list.last;
+
+            unsafe {
+                if let Some(next) = next {
+                    (*next.as_ptr()).prev = None;
+                    (*node.as_ptr()).next = None;
+                }
+            }
+
+            self.list.len = self_len;
+            self.list.first = self_first;
+            self.list.last = self_last;
+            self.index = self_index;
+
+            LinkedList {
+                first: new_first,
+                last: new_last,
+                len: new_len,
+                _phantom: PhantomData,
+            }
+        } else {
+            std::mem::replace(self.list, LinkedList::new())
+        }
     }
 
-    pub fn splice_before(&mut self, _input: LinkedList<T>) {
-        unimplemented!();
+    pub fn splice_before(&mut self, mut input: LinkedList<T>) {
+        unsafe {
+            if input.is_empty() {
+                // they're empty
+            } else if let Some(node) = self.current {
+                // insert
+                let input_first = input.first.take().unwrap();
+                let input_last = input.last.take().unwrap();
+                if let Some(prev) = (*node.as_ptr()).prev {
+                    (*prev.as_ptr()).next = Some(input_first);
+                    (*input_first.as_ptr()).prev = Some(prev);
+                } else {
+                    self.list.first = Some(input_first);
+                }
+                (*node.as_ptr()).prev = Some(input_last);
+                (*input_last.as_ptr()).next = Some(node);
+            } else if let Some(last) = self.list.last {
+                // append
+                let input_first = input.first.take().unwrap();
+                let input_last = input.last.take().unwrap();
+                (*last.as_ptr()).next = Some(input_first);
+                (*input_first.as_ptr()).prev = Some(last);
+                self.list.last = Some(input_last);
+            } else {
+                // we're empty
+                std::mem::swap(self.list, &mut input);
+            }
+        }
+        self.list.len += input.len;
+        input.len = 0;
     }
 
-    pub fn splice_after(&mut self, _input: LinkedList<T>) {
-        unimplemented!();
+    pub fn splice_after(&mut self, mut input: LinkedList<T>) {
+        unsafe {
+            if input.is_empty() {
+                // they're empty
+            } else if let Some(node) = self.current {
+                // insert
+                let input_first = input.first.take().unwrap();
+                let input_last = input.last.take().unwrap();
+                if let Some(next) = (*node.as_ptr()).next {
+                    (*next.as_ptr()).prev = Some(input_last);
+                    (*input_last.as_ptr()).next = Some(next);
+                } else {
+                    self.list.last = Some(input_last);
+                }
+                (*node.as_ptr()).next = Some(input_first);
+                (*input_first.as_ptr()).prev = Some(node);
+            } else if let Some(first) = self.list.first {
+                // prepend
+                let input_first = input.first.take().unwrap();
+                let input_last = input.last.take().unwrap();
+                (*first.as_ptr()).prev = Some(input_last);
+                (*input_last.as_ptr()).next = Some(first);
+                self.list.first = Some(input_first);
+            } else {
+                // we're empty
+                std::mem::swap(self.list, &mut input);
+            }
+        }
+        self.list.len += input.len;
+        input.len = 0;
     }
 }
 
@@ -860,7 +955,6 @@ mod test {
         let from_front: Vec<_> = list.iter().collect();
         let mut from_back: Vec<_> = list.iter().rev().collect();
         from_back.reverse();
-
         assert_eq!(from_front, from_back);
     }
 }
