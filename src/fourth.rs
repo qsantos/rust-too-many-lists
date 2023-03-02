@@ -45,6 +45,7 @@ impl<T> List<T> {
                 self.first = Some(new_node);
             }
         }
+        assert_eq!(Rc::strong_count(self.first.as_ref().unwrap()), 2);
     }
 
     pub fn pop_front(&mut self) -> Option<T> {
@@ -93,6 +94,7 @@ impl<T> List<T> {
                 self.last = Some(new_node);
             }
         }
+        assert_eq!(Rc::strong_count(self.first.as_ref().unwrap()), 2);
     }
 
     pub fn pop_back(&mut self) -> Option<T> {
