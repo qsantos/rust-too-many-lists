@@ -52,6 +52,23 @@ impl<T> Drop for List<T> {
     }
 }
 
+pub struct IntoIter<T>(List<T>);
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_front()
+    }
+}
+
+impl<T> IntoIterator for List<T> {
+    type IntoIter = IntoIter<T>;
+    type Item = T;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::List;
@@ -74,5 +91,17 @@ mod test {
         assert_eq!(list.pop_front(), Some(2));
         assert_eq!(list.pop_front(), Some(10));
         assert_eq!(list.pop_front(), None);
+    }
+
+    #[test]
+    fn into_iter() {
+        let mut list = List::new();
+        list.push_front(1);
+        list.push_front(2);
+        list.push_front(3);
+        list.push_front(4);
+        list.push_front(5);
+        let values: Vec<_> = list.into_iter().collect();
+        assert_eq!(values, vec![5, 4, 3, 2, 1]);
     }
 }
