@@ -222,19 +222,40 @@ impl<'a, T> IntoIterator for &'a LinkedList<T> {
 }
 
 pub struct IterMut<'a, T> {
+    front: Link<T>,
+    back: Link<T>,
+    len: usize,
     _phantom: PhantomData<&'a mut T>,
 }
 
 impl<'a, T> Iterator for IterMut<'a, T> {
     type Item = &'a mut T;
     fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!()
+        if self.len == 0 {
+            None
+        } else {
+            self.front.map(|node| unsafe {
+                let ptr = node.as_ptr();
+                self.front = (*ptr).next;
+                self.len -= 1;
+                &mut (*ptr).value
+            })
+        }
     }
 }
 
 impl<'a, T> DoubleEndedIterator for IterMut<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        unimplemented!()
+        if self.len == 0 {
+            None
+        } else {
+            self.back.map(|node| unsafe {
+                let ptr = node.as_ptr();
+                self.back = (*ptr).prev;
+                self.len -= 1;
+                &mut (*ptr).value
+            })
+        }
     }
 }
 
@@ -243,6 +264,9 @@ impl<'a, T> IntoIterator for &'a mut LinkedList<T> {
     type Item = &'a mut T;
     fn into_iter(self) -> Self::IntoIter {
         IterMut {
+            front: self.first,
+            back: self.last,
+            len: self.len,
             _phantom: PhantomData,
         }
     }
