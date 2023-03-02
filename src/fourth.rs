@@ -162,6 +162,23 @@ impl<T> DoubleEndedIterator for IntoIter<T> {
     }
 }
 
+/*
+pub struct Iter<'a, T> {
+    current: Option<Ref<'a, Node<T>>>,
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = Ref<'a, T>;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.current.take().map(|node_ref| {
+            let (value, next) = Ref::map_split(node_ref, |node| (&node.value, &node.next));
+            self.current = next.as_ref().map(|next_ref| next_ref.borrow());
+            value
+        })
+    }
+}
+*/
+
 #[cfg(test)]
 mod test {
     use super::List;
