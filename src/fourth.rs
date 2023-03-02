@@ -1,4 +1,5 @@
-use std::{cell::RefCell, rc::Rc};
+use std::cell::{Ref, RefCell};
+use std::rc::Rc;
 
 type Link<T> = Option<Rc<RefCell<Node<T>>>>;
 
@@ -66,6 +67,12 @@ impl<T> List<T> {
             }
         }
     }
+
+    pub fn peek_front(&self) -> Option<Ref<T>> {
+        self.first
+            .as_ref()
+            .map(|node| Ref::map(node.borrow(), |node| &node.value))
+    }
 }
 
 impl<T> Default for List<T> {
@@ -105,5 +112,16 @@ mod test {
         // Check exhaustion
         assert_eq!(list.pop_front(), Some(1));
         assert_eq!(list.pop_front(), None);
+    }
+
+    #[test]
+    fn peek() {
+        let mut list = List::new();
+        assert!(list.peek_front().is_none());
+        list.push_front(1);
+        list.push_front(2);
+        list.push_front(3);
+
+        assert_eq!(&*list.peek_front().unwrap(), &3);
     }
 }
