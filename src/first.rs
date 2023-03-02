@@ -94,6 +94,31 @@ impl<T> List<T> {
     }
 }
 
+pub struct IterMut<'a, T> {
+    current: Option<&'a mut Node<T>>,
+}
+
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.current.take() {
+            None => None,
+            Some(node) => {
+                self.current = node.next.as_deref_mut();
+                Some(&mut node.value)
+            }
+        }
+    }
+}
+
+impl<T> List<T> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
+        IterMut {
+            current: self.root.as_deref_mut(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::List;
@@ -142,5 +167,20 @@ mod test {
         assert_eq!(values, vec![5, 4, 3, 2, 1]);
         let values: Vec<_> = list.into_iter().collect();
         assert_eq!(values, vec![5, 4, 3, 2, 1]);
+    }
+
+    #[test]
+    fn iter_mut() {
+        let mut list = List::new();
+        list.push_front(1);
+        list.push_front(2);
+        list.push_front(3);
+        list.push_front(4);
+        list.push_front(5);
+        for v in list.iter_mut() {
+            *v *= 2;
+        }
+        let values: Vec<_> = list.into_iter().collect();
+        assert_eq!(values, vec![10, 8, 6, 4, 2]);
     }
 }
