@@ -1,6 +1,6 @@
 use std::ptr::null_mut;
 
-type Link<T> = Option<Box<Node<T>>>;
+type Link<T> = *mut Node<T>;
 
 struct Node<T> {
     value: T,
@@ -9,7 +9,10 @@ struct Node<T> {
 
 impl<T> Node<T> {
     fn new(value: T) -> Box<Node<T>> {
-        Box::new(Node { value, next: None })
+        Box::new(Node {
+            value,
+            next: null_mut(),
+        })
     }
 }
 
@@ -21,38 +24,48 @@ pub struct List<T> {
 impl<T> List<T> {
     pub fn new() -> Self {
         List {
-            first: None,
+            first: null_mut(),
             last: null_mut(),
         }
     }
 
     pub fn push(&mut self, value: T) {
-        let mut new_node = Node::new(value);
+        let new_node = Box::into_raw(Node::new(value));
         let last = self.last;
-        self.last = &mut *new_node;
+        self.last = new_node;
         if last.is_null() {
-            self.first = Some(new_node);
+            self.first = new_node;
         } else {
             unsafe {
-                (*last).next = Some(new_node);
+                (*last).next = new_node;
             }
         }
     }
 
     pub fn pop(&mut self) -> Option<T> {
-        self.first.take().map(|node| {
+        let first = self.first;
+        if first.is_null() {
+            None
+        } else {
+            let node = unsafe { Box::from_raw(first) };
             self.first = node.next;
-            if self.first.is_none() {
+            if self.first.is_null() {
                 self.last = null_mut();
             }
-            node.value
-        })
+            Some(node.value)
+        }
     }
 }
 
 impl<T> Default for List<T> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<T> Drop for List<T> {
+    fn drop(&mut self) {
+        while self.pop().is_some() {}
     }
 }
 
