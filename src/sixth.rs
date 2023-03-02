@@ -167,19 +167,44 @@ impl<T> IntoIterator for LinkedList<T> {
 }
 
 pub struct Iter<'a, T> {
+    front: Link<T>,
+    back: Link<T>,
+    len: usize,
     _phantom: PhantomData<&'a T>,
 }
 
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!()
+        if self.len == 0 {
+            None
+        } else {
+            self.front.map(|node| unsafe {
+                let ptr = node.as_ptr();
+                self.front = (*ptr).next;
+                self.len -= 1;
+                &(*ptr).value
+            })
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.len, Some(self.len))
     }
 }
 
 impl<'a, T> DoubleEndedIterator for Iter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        unimplemented!()
+        if self.len == 0 {
+            None
+        } else {
+            self.back.map(|node| unsafe {
+                let ptr = node.as_ptr();
+                self.back = (*ptr).prev;
+                self.len -= 1;
+                &(*ptr).value
+            })
+        }
     }
 }
 
@@ -188,6 +213,9 @@ impl<'a, T> IntoIterator for &'a LinkedList<T> {
     type Item = &'a T;
     fn into_iter(self) -> Self::IntoIter {
         Iter {
+            front: self.first,
+            back: self.last,
+            len: self.len,
             _phantom: PhantomData,
         }
     }
