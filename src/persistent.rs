@@ -64,6 +64,19 @@ impl<T> List<T> {
     }
 }
 
+impl<T> Drop for List<T> {
+    fn drop(&mut self) {
+        let mut current = self.head.take();
+        while let Some(rc) = current {
+            if let Ok(mut node) = Rc::try_unwrap(rc) {
+                current = node.next.take();
+            } else {
+                break;
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::List;
