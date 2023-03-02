@@ -37,6 +37,15 @@ impl<T> Default for List<T> {
     }
 }
 
+impl<T> Drop for List<T> {
+    fn drop(&mut self) {
+        let mut cur = self.root.take();
+        while let Some(mut node) = cur {
+            cur = node.next.take();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::List;
