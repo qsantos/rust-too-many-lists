@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::ptr::null_mut;
 
 struct Node<T> {
@@ -10,6 +11,7 @@ pub struct List<T> {
     first: *mut Node<T>,
     last: *mut Node<T>,
     len: usize,
+    _phantom: PhantomData<T>,
 }
 
 impl<T> List<T> {
@@ -18,6 +20,7 @@ impl<T> List<T> {
             first: null_mut(),
             last: null_mut(),
             len: 0,
+            _phantom: PhantomData,
         }
     }
 
