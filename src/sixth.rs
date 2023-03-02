@@ -666,6 +666,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::neg_cmp_op_on_partial_ord)]
     fn test_ord_nan() {
         let nan = f64::NAN;
         let n = list_from(&[nan]);
@@ -857,9 +858,9 @@ mod test {
 
     fn check_links<T: Eq + std::fmt::Debug>(list: &LinkedList<T>) {
         let from_front: Vec<_> = list.iter().collect();
-        let from_back: Vec<_> = list.iter().rev().collect();
-        let re_reved: Vec<_> = from_back.into_iter().rev().collect();
+        let mut from_back: Vec<_> = list.iter().rev().collect();
+        from_back.reverse();
 
-        assert_eq!(from_front, re_reved);
+        assert_eq!(from_front, from_back);
     }
 }
