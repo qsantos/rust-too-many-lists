@@ -317,9 +317,12 @@ impl<T: Clone> Clone for LinkedList<T> {
     }
 }
 
-impl<T> Hash for LinkedList<T> {
-    fn hash<H: std::hash::Hasher>(&self, _state: &mut H) {
-        unimplemented!()
+impl<T: Hash> Hash for LinkedList<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.len.hash(state);
+        for v in self {
+            v.hash(state);
+        }
     }
 }
 
