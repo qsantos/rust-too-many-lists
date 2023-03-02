@@ -242,6 +242,10 @@ impl<'a, T> Iterator for IterMut<'a, T> {
             })
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.len, Some(self.len))
+    }
 }
 
 impl<'a, T> DoubleEndedIterator for IterMut<'a, T> {
