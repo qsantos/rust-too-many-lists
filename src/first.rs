@@ -14,6 +14,14 @@ impl<T> List<T> {
         List { root: None }
     }
 
+    pub fn peek(&self) -> Option<&T> {
+        self.root.as_ref().map(|node| &node.value)
+    }
+
+    pub fn peek_mut(&mut self) -> Option<&mut T> {
+        self.root.as_mut().map(|node| &mut node.value)
+    }
+
     pub fn push_front(&mut self, value: T) {
         self.root = Some(Box::new(Node {
             value,
@@ -51,12 +59,17 @@ mod test {
     #[test]
     fn basics() {
         let mut list = List::new();
+        assert_eq!(list.peek(), None);
+        assert_eq!(list.peek_mut(), None);
         assert_eq!(list.pop_front(), None);
         list.push_front(10);
         list.push_front(5);
+        assert_eq!(list.peek(), Some(&5));
+        let head = list.peek_mut().unwrap();
+        *head = 7;
         list.push_front(0);
         assert_eq!(list.pop_front(), Some(0));
-        assert_eq!(list.pop_front(), Some(5));
+        assert_eq!(list.pop_front(), Some(7));
         list.push_front(2);
         assert_eq!(list.pop_front(), Some(2));
         assert_eq!(list.pop_front(), Some(10));
