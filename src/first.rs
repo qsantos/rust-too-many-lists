@@ -69,6 +69,31 @@ impl<T> IntoIterator for List<T> {
     }
 }
 
+pub struct IterRef<'a, T> {
+    current: Option<&'a Node<T>>,
+}
+
+impl<'a, T> Iterator for IterRef<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.current {
+            None => None,
+            Some(node) => {
+                self.current = node.next.as_deref();
+                Some(&node.value)
+            }
+        }
+    }
+}
+
+impl<T> List<T> {
+    pub fn iter(&self) -> IterRef<'_, T> {
+        IterRef {
+            current: self.root.as_deref(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::List;
@@ -101,6 +126,20 @@ mod test {
         list.push_front(3);
         list.push_front(4);
         list.push_front(5);
+        let values: Vec<_> = list.into_iter().collect();
+        assert_eq!(values, vec![5, 4, 3, 2, 1]);
+    }
+
+    #[test]
+    fn iter() {
+        let mut list = List::new();
+        list.push_front(1);
+        list.push_front(2);
+        list.push_front(3);
+        list.push_front(4);
+        list.push_front(5);
+        let values: Vec<_> = list.iter().copied().collect();
+        assert_eq!(values, vec![5, 4, 3, 2, 1]);
         let values: Vec<_> = list.into_iter().collect();
         assert_eq!(values, vec![5, 4, 3, 2, 1]);
     }
