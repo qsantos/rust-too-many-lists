@@ -307,9 +307,13 @@ impl<T> Debug for LinkedList<T> {
     }
 }
 
-impl<T> Clone for LinkedList<T> {
+impl<T: Clone> Clone for LinkedList<T> {
     fn clone(&self) -> Self {
-        unimplemented!()
+        let mut l = LinkedList::new();
+        for v in self {
+            l.push_back(v.clone())
+        }
+        l
     }
 }
 
