@@ -281,23 +281,23 @@ impl<T> LinkedList<T> {
     }
 }
 
-impl<T> PartialEq for LinkedList<T> {
-    fn eq(&self, _other: &Self) -> bool {
-        unimplemented!()
+impl<T: PartialEq> PartialEq for LinkedList<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.iter().eq(other)
     }
 }
 
-impl<T> Eq for LinkedList<T> {}
+impl<T: Eq> Eq for LinkedList<T> {}
 
-impl<T> PartialOrd for LinkedList<T> {
-    fn partial_cmp(&self, _other: &Self) -> Option<std::cmp::Ordering> {
-        unimplemented!()
+impl<T: PartialOrd> PartialOrd for LinkedList<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.iter().partial_cmp(other)
     }
 }
 
-impl<T> Ord for LinkedList<T> {
-    fn cmp(&self, _other: &Self) -> std::cmp::Ordering {
-        unimplemented!()
+impl<T: Ord> Ord for LinkedList<T> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.iter().cmp(other)
     }
 }
 
