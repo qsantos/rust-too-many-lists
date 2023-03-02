@@ -391,19 +391,23 @@ impl<'a, T> CursorMut<'a, T> {
 
     pub fn peek_next(&mut self) -> Option<&mut T> {
         unsafe {
-            self.current
-                .as_mut()
-                .and_then(|node| node.as_mut().prev)
-                .map(|mut node| &mut node.as_mut().value)
+            let next_node = if let Some(node) = self.current {
+                (*node.as_ptr()).next
+            } else {
+                self.list.first
+            };
+            next_node.map(|node| &mut (*node.as_ptr()).value)
         }
     }
 
     pub fn peek_prev(&mut self) -> Option<&mut T> {
         unsafe {
-            self.current
-                .as_mut()
-                .and_then(|node| node.as_mut().next)
-                .map(|mut node| &mut node.as_mut().value)
+            let prev_node = if let Some(node) = self.current {
+                (*node.as_ptr()).prev
+            } else {
+                self.list.last
+            };
+            prev_node.map(|node| &mut (*node.as_ptr()).value)
         }
     }
 
