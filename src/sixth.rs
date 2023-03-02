@@ -1,15 +1,17 @@
 use std::marker::PhantomData;
-use std::ptr::null_mut;
+use std::ptr::NonNull;
+
+type Link<T> = Option<NonNull<Node<T>>>;
 
 struct Node<T> {
     value: T,
-    next: *mut Node<T>,
-    prev: *mut Node<T>,
+    next: Link<T>,
+    prev: Link<T>,
 }
 
 pub struct List<T> {
-    first: *mut Node<T>,
-    last: *mut Node<T>,
+    first: Link<T>,
+    last: Link<T>,
     len: usize,
     _phantom: PhantomData<T>,
 }
@@ -17,8 +19,8 @@ pub struct List<T> {
 impl<T> List<T> {
     pub fn new() -> Self {
         List {
-            first: null_mut(),
-            last: null_mut(),
+            first: None,
+            last: None,
             len: 0,
             _phantom: PhantomData,
         }
@@ -33,90 +35,80 @@ impl<T> List<T> {
     }
 
     pub fn push_front(&mut self, value: T) {
-        let first = self.first;
-        let node = Box::into_raw(Box::new(Node {
-            value,
-            next: first,
-            prev: null_mut(),
-        }));
-        if first.is_null() {
-            self.last = node;
-        } else {
-            unsafe {
-                (*first).prev = node;
+        unsafe {
+            let node = Some(NonNull::new_unchecked(Box::into_raw(Box::new(Node {
+                value,
+                next: self.first,
+                prev: None,
+            }))));
+            match self.first.as_mut() {
+                None => self.last = node,
+                Some(first) => first.as_mut().prev = node,
             }
+            self.first = node;
+            self.len += 1;
         }
-        self.first = node;
-        self.len += 1;
     }
 
     pub fn push_back(&mut self, value: T) {
-        let last = self.last;
-        let node = Box::into_raw(Box::new(Node {
-            value,
-            next: null_mut(),
-            prev: last,
-        }));
-        if last.is_null() {
-            self.first = node;
-        } else {
-            unsafe {
-                (*last).next = node;
+        unsafe {
+            let node = Some(NonNull::new_unchecked(Box::into_raw(Box::new(Node {
+                value,
+                next: None,
+                prev: self.last,
+            }))));
+            match self.last.as_mut() {
+                None => self.first = node,
+                Some(last) => last.as_mut().next = node,
             }
+            self.last = node;
+            self.len += 1;
         }
-        self.last = node;
-        self.len += 1;
     }
 
     pub fn pop_front(&mut self) -> Option<T> {
-        if self.first.is_null() {
-            None
-        } else {
-            let node = unsafe { Box::from_raw(self.first) };
-            self.first = node.next;
-            if self.first.is_null() {
-                self.last = null_mut();
-            } else {
-                unsafe {
-                    (*self.first).prev = null_mut();
+        unsafe {
+            self.first.map(|node| {
+                let node = Box::from_raw(node.as_ptr());
+                self.first = node.next;
+                match self.first.as_mut() {
+                    None => self.last = None,
+                    Some(first) => first.as_mut().prev = None,
                 }
-            }
-            self.len -= 1;
-            Some(node.value)
+                self.len -= 1;
+                node.value
+            })
         }
     }
 
     pub fn pop_back(&mut self) -> Option<T> {
-        if self.last.is_null() {
-            None
-        } else {
-            let node = unsafe { Box::from_raw(self.last) };
-            self.last = node.prev;
-            if self.last.is_null() {
-                self.first = null_mut();
-            } else {
-                unsafe {
-                    (*self.last).next = null_mut();
+        unsafe {
+            self.last.map(|node| {
+                let node = Box::from_raw(node.as_ptr());
+                self.last = node.prev;
+                match self.last.as_mut() {
+                    None => self.first = None,
+                    Some(last) => last.as_mut().next = None,
                 }
-            }
-            self.len -= 1;
-            Some(node.value)
+                self.len -= 1;
+                node.value
+            })
         }
     }
 
     pub fn peek_front(&self) -> Option<&T> {
-        unsafe { self.first.as_ref() }.map(|node| &node.value)
+        unsafe { self.first.map(|node| &node.as_ref().value) }
     }
 
     pub fn peek_back(&self) -> Option<&T> {
-        unsafe { self.last.as_ref() }.map(|node| &node.value)
+        unsafe { self.last.map(|node| &node.as_ref().value) }
     }
 
     pub fn peek_front_mut(&mut self) -> Option<&mut T> {
-        unsafe { self.first.as_mut() }.map(|node| &mut node.value)
+        unsafe { self.first.as_mut().map(|node| &mut node.as_mut().value) }
     }
     pub fn peek_back_mut(&mut self) -> Option<&mut T> {
-        unsafe { self.last.as_mut() }.map(|node| &mut node.value)
+        unsafe { self.last.as_mut().map(|node| &mut node.as_mut().value) }
     }
 }
 
