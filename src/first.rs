@@ -22,12 +22,10 @@ impl<T> List<T> {
     }
 
     pub fn pop_front(&mut self) -> Option<T> {
-        if let Some(node) = self.root.take() {
+        self.root.take().map(|node| {
             self.root = node.next;
-            Some(node.value)
-        } else {
-            None
-        }
+            node.value
+        })
     }
 }
 
